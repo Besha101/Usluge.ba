@@ -2,12 +2,13 @@
 
 // 1) UNESI SVOJ FIREBASE KONFIG OVDJE ↓  (Project settings » General » Your apps)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDmqAkGl1TVXTOWaqBTJZw_o2D3VJ0XkkY",
+  authDomain: "uslugeba-278b6.firebaseapp.com",
+  projectId: "uslugeba-278b6",
+  storageBucket: "uslugeba-278b6.firebasestorage.app",
+  messagingSenderId: "748061595893",
+  appId: "1:748061595893:web:ed03a1a71d74560affcdbc",
+  measurementId: "G-CVC3XTPRT9"
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
