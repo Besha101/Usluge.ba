@@ -1,0 +1,31 @@
+:root{
+  --brand:#0d6efd;      /* plava */
+  --brand-2:#0b5ed7;    /* tamnija plava */
+  --accent:#e9f2ff;     /* svijetlo plava pozadina */
+  --text:#0f172a;       /* tamni tekst */
+  --bg:#f7f9fc;         /* svijetla pozadina */
+  --radius:16px;
+}
+body{ background:var(--bg); color:var(--text) }
+.shell{ max-width:1180px }
+.nav-shadow{ box-shadow:0 6px 30px rgba(0,0,0,.04) }
+.btn-brand{ background:var(--brand); border-color:var(--brand) }
+.btn-brand:hover{ background:var(--brand-2); border-color:var(--brand-2) }
+.logo{ font-weight:800; letter-spacing:.3px }
+.logo .dot{ color:var(--brand) }
+.card{ border-radius:var(--radius) }
+.cat-tile{ border:1px solid #e9eef5; border-radius:14px; transition:.2s; background:#fff }
+.cat-tile:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.06) }
+.cat-icon{ font-size:34px }
+.badge-cat{ background:var(--accent); color:var(--brand) }
+.listing-thumb{ height:200px; object-fit:cover; border-top-left-radius:var(--radius); border-top-right-radius:var(--radius) }
+.price{ font-weight:700 }
+.rating .bi-star-fill{ color:#f59e0b }
+.pointer{ cursor:pointer }
+.hidden{ display:none !important }
+.sidebar{ position:sticky; top:90px }
+/* Chat */
+.chat-box{ height:340px; overflow:auto; background:#fff; border:1px solid #e9eef5; border-radius:12px }
+.msg{ padding:.5rem .75rem; border-radius:12px; margin:.25rem 0; display:inline-block; max-width:82% }
+.msg.me{ background:var(--accent) }
+.msg.them{ background:#f1f5f9 }
