@@ -28,9 +28,10 @@ const CATEGORIES = [
   { key:'casovi', label:'Časovi', icon:'bi-easel' },
   { key:'ljepota', label:'Ljepota i zdravlje', icon:'bi-heart' },
   { key:'auto', label:'Auto mehanika', icon:'bi-car-front' },
-  { key:'ciscenje', label:'Čišćenje', icon:'bi-broom' },
+  { key:'ciscenje', label:'Čišćenje', icon:'bi-bucket' },
   { key:'prevodjenje', label:'Prevođenje', icon:'bi-chat-square-dots' },
   { key:'dostava', label:'Dostava', icon:'bi-truck' },
+  { key:'tutori', label:'Tutori', icon:'bi-mortarboard' },
   { key:'ostalo', label:'Ostalo', icon:'bi-grid-3x3-gap' },
 ];
 
