@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="bs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Usluge.ba — Marketplace usluga</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <style>
+      :root{
+        --brand:#0d6efd;      /* plava */
+        --brand-2:#0b5ed7;    /* tamnija plava */
+        --accent:#e9f2ff;     /* svijetlo plava pozadina */
+        --text:#0f172a;       /* tamni tekst */
+        --bg:#f7f9fc;         /* svijetla pozadina */
+        --radius:16px;
+      }
+      body{ background:var(--bg); color:var(--text) }
+      .shell{ max-width:1180px }
+      .nav-shadow{ box-shadow:0 6px 30px rgba(0,0,0,.04) }
+      .btn-brand{ background:var(--brand); border-color:var(--brand) }
+      .btn-brand:hover{ background:var(--brand-2); border-color:var(--brand-2) }
+      .logo{ font-weight:800; letter-spacing:.3px }
+      .logo .dot{ color:var(--brand) }
+      .card{ border-radius:var(--radius) }
+      .cat-tile{ border:1px solid #e9eef5; border-radius:14px; transition:.2s; background:#fff }
+      .cat-tile:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.06) }
+      .cat-icon{ font-size:34px }
+      .badge-cat{ background:var(--accent); color:var(--brand) }
+      .listing-thumb{ height:200px; object-fit:cover; border-top-left-radius:var(--radius); border-top-right-radius:var(--radius) }
+      .price{ font-weight:700 }
+      .rating .bi-star-fill{ color:#f59e0b }
+      .pointer{ cursor:pointer }
+      .hidden{ display:none !important }
+      .sidebar{ position:sticky; top:90px }
+      /* Chat */
+      .chat-box{ height:340px; overflow:auto; background:#fff; border:1px solid #e9eef5; border-radius:12px }
+      .msg{ padding:.5rem .75rem; border-radius:12px; margin:.25rem 0; display:inline-block; max-width:82% }
+      .msg.me{ background:var(--accent) }
+      .msg.them{ background:#f1f5f9 }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg bg-white nav-shadow sticky-top">
+      <div class="container shell">
+        <a class="navbar-brand logo pointer" onclick="APP.route('/')">Usluge<span class="dot">.ba</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nav">
+          <form class="d-flex flex-grow-1 gap-2 my-3 my-lg-0 mx-lg-3" onsubmit="APP.searchFromNav(event)">
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+              <input id="navSearch" class="form-control" placeholder="Pretraži usluge i oglase...">
+            </div>
+          </form>
+          <ul class="navbar-nav align-items-lg-center gap-lg-2 me-lg-2" id="authLinks">
+            <li class="nav-item"><a class="nav-link" onclick="APP.route('/login')">Prijava</a></li>
+            <li class="nav-item"><a class="nav-link" onclick="APP.route('/register')">Registracija</a></li>
+          </ul>
+          <div class="ms-lg-2 hidden" id="userMenu">
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-person-circle me-1"></i><span id="userNameShort">Profil</span></button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" onclick="APP.route('/profile')"><i class="bi bi-person-badge me-2"></i>Moj profil</a></li>
+                <li><a class="dropdown-item" onclick="APP.route('/my-listings')"><i class="bi bi-grid me-2"></i>Moji oglasi</a></li>
+                <li><a class="dropdown-item" onclick="APP.route('/inbox')"><i class="bi bi-chat-dots me-2"></i>Poruke</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" onclick="APP.logout()"><i class="bi bi-box-arrow-right me-2"></i>Odjava</a></li>
+              </ul>
+            </div>
+            <a class="btn btn-brand text-white ms-2" onclick="APP.route('/new')"><i class="bi bi-plus-circle me-1"></i> Objavi oglas</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-4">
+      <div class="container shell">
+        <!-- HOME -->
+        <section data-view id="view-home">
+          <h3 class="fw-bold mb-3">Kategorije</h3>
+          <div id="catGrid" class="row g-3 row-cols-2 row-cols-md-4 row-cols-lg-6"></div>
+
+          <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+            <h3 class="fw-bold mb-0">Istaknuti oglasi</h3>
+            <a class="btn btn-sm btn-brand text-white" onclick="APP.route('/new')"><i class="bi bi-box-arrow-in-up-right me-1"></i> Objavi oglas</a>
+          </div>
+          <div id="featured" class="row g-3"></div>
+
+          <section class="my-5" id="recenzije">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h3 class="fw-bold mb-0">Šta kažu korisnici</h3>
+              <a class="text-decoration-none" onclick="APP.route('/reviews')">Pogledaj sve</a>
+            </div>
+            <div class="row g-3" id="homeReviews"></div>
+          </section>
+        </section>
+
+        <!-- AUTH -->
+        <section data-view id="view-login" class="hidden">
+          <div class="row justify-content-center">
+            <div class="col-md-6">
+              <div class="card p-3 p-md-4">
+                <h4 class="fw-bold">Prijava</h4>
+                <form onsubmit="APP.handleLogin(event)" class="mt-3">
+                  <div class="mb-3"><label class="form-label">Email</label><input id="login-email" type="email" class="form-control" required></div>
+                  <div class="mb-3"><label class="form-label">Lozinka</label><input id="login-pass" type="password" class="form-control" required></div>
+                  <button class="btn btn-brand text-white w-100">Prijavi se</button>
+                </form>
+                <p class="small mt-3">Nemaš račun? <a onclick="APP.route('/register')">Registruj se</a></p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section data-view id="view-register" class="hidden">
+          <div class="row justify-content-center">
+            <div class="col-md-6">
+              <div class="card p-3 p-md-4">
+                <h4 class="fw-bold">Registracija</h4>
+                <form onsubmit="APP.handleRegister(event)" class="mt-3">
+                  <div class="mb-3"><label class="form-label">Ime i prezime</label><input id="reg-name" class="form-control" required></div>
+                  <div class="mb-3"><label class="form-label">Email</label><input id="reg-email" type="email" class="form-control" required></div>
+                  <div class="mb-3"><label class="form-label">Lozinka</label><input id="reg-pass" type="password" class="form-control" minlength="6" required></div>
+                  <button class="btn btn-brand text-white w-100">Kreiraj račun</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CATEGORY LIST -->
+        <section data-view id="view-category" class="hidden">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <nav aria-label="breadcrumb"><ol class="breadcrumb mb-0"><li class="breadcrumb-item pointer" onclick="APP.route('/')">Početna</li><li class="breadcrumb-item active" id="crumbCat">Kategorija</li></ol></nav>
+            <small class="text-muted" id="resultCount"></small>
+          </div>
+          <div class="row g-4">
+            <aside class="col-lg-3">
+              <div class="sidebar"><div class="card"><div class="card-body">
+                <h6 class="mb-3">Filteri</h6>
+                <div class="mb-3"><label class="form-label">Pretraga</label><input id="f-q" class="form-control" oninput="APP.applyFilters()"></div>
+                <div class="mb-3"><label class="form-label">Cijena (BAM)</label><div class="input-group"><input id="f-min" type="number" class="form-control" placeholder="Min" oninput="APP.applyFilters()"><input id="f-max" type="number" class="form-control" placeholder="Max" oninput="APP.applyFilters()"></div></div>
+                <div class="mb-3"><label class="form-label">Stanje</label>
+                  <div class="form-check"><input class="form-check-input" type="checkbox" id="f-novo" onchange="APP.applyFilters()"><label class="form-check-label" for="f-novo">Novo</label></div>
+                  <div class="form-check"><input class="form-check-input" type="checkbox" id="f-kor" onchange="APP.applyFilters()"><label class="form-check-label" for="f-kor">Korišteno</label></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Sortiraj</label><select id="f-sort" class="form-select" onchange="APP.applyFilters()"><option value="new">Najnovije</option><option value="cheap">Najjeftinije</option><option value="exp">Najskuplje</option><option value="rate">Najbolje ocijenjeno</option></select></div>
+              </div></div></div>
+            </aside>
+            <main class="col-lg-9">
+              <h3 class="fw-bold mb-3" id="catTitle">Kategorija</h3>
+              <div id="listings" class="row g-3"></div>
+              <nav class="mt-4"><ul id="pager" class="pagination justify-content-center"></ul></nav>
+            </main>
+          </div>
+        </section>
+
+        <!-- NEW LISTING -->
+        <section data-view id="view-new" class="hidden">
+          <div class="row justify-content-center">
+            <div class="col-lg-8">
+              <div class="card p-3 p-md-4">
+                <h4 class="fw-bold">Objavi oglas</h4>
+                <form onsubmit="APP.submitListing(event)" class="mt-3">
+                  <div class="mb-3"><label class="form-label">Naslov</label><input id="new-title" class="form-control" required></div>
+                  <div class="mb-3"><label class="form-label">Kategorija</label><select id="new-cat" class="form-select" required></select></div>
+                  <div class="mb-3"><label class="form-label">Opis</label><textarea id="new-desc" class="form-control" rows="4" required></textarea></div>
+                  <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Cijena (BAM)</label><input id="new-price" type="number" class="form-control" placeholder="npr. 25"></div>
+                    <div class="col-md-4"><label class="form-label">Na upit</label><div class="form-check"><input id="new-poa" class="form-check-input" type="checkbox"></div></div>
+                    <div class="col-md-4"><label class="form-label">Grad</label><input id="new-city" class="form-control" placeholder="npr. Sarajevo"></div>
+                  </div>
+                  <div class="mb-3 mt-3"><label class="form-label">Fotografije rada (max 6)</label><input id="new-photos" type="file" class="form-control" accept="image/*" multiple></div>
+                  <button class="btn btn-brand text-white">Objavi</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- LISTING DETAILS -->
+        <section data-view id="view-listing" class="hidden">
+          <div class="row g-4">
+            <div class="col-lg-8">
+              <div class="card">
+                <div id="gallery" class="carousel slide" data-bs-ride="false">
+                  <div class="carousel-inner" id="galleryInner"></div>
+                  <button class="carousel-control-prev" type="button" data-bs-target="#gallery" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+                  <button class="carousel-control-next" type="button" data-bs-target="#gallery" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+                </div>
+                <div class="card-body">
+                  <h3 id="l-title" class="fw-bold mb-1">Naslov</h3>
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge badge-cat" id="l-cat">Kategorija</span>
+                    <span class="text-muted" id="l-city"></span>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                      <div class="h4 mb-0" id="l-price"></div>
+                      <small class="text-muted" id="l-upit"></small>
+                    </div>
+                    <div class="rating" id="l-rating"></div>
+                  </div>
+                  <p id="l-desc" class="mb-0"></p>
+                </div>
+              </div>
+
+              <!-- Reviews -->
+              <div class="card mt-3">
+                <div class="card-body">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h5 class="fw-bold mb-0">Recenzije</h5>
+                    <span class="text-muted small" id="revCount"></span>
+                  </div>
+                  <div id="revList" class="vstack gap-3"></div>
+
+                  <hr class="my-3">
+                  <form onsubmit="APP.submitReview(event)" id="revForm" class="mt-2">
+                    <div class="row g-2 align-items-center">
+                      <div class="col-md-2">
+                        <label class="form-label mb-0">Ocjena</label>
+                        <select id="revRating" class="form-select" required>
+                          <option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option>
+                        </select>
+                      </div>
+                      <div class="col-md-8"><label class="form-label mb-0">Komentar</label><input id="revText" class="form-control" placeholder="Napiši iskustvo" required></div>
+                      <div class="col-md-2 d-grid"><button class="btn btn-brand text-white mt-4">Objavi</button></div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seller card + Chat -->
+            <div class="col-lg-4">
+              <div class="card">
+                <div class="card-body d-flex gap-3 align-items-center">
+                  <img id="s-avatar" src="https://i.pravatar.cc/100?img=15" class="rounded-circle" width="56" height="56" alt="avatar"/>
+                  <div>
+                    <div id="s-name" class="fw-bold">Ime prodavača</div>
+                    <a class="small" id="s-profile" onclick="APP.openSellerProfile()">Pogledaj profil</a>
+                  </div>
+                </div>
+                <div class="card-body border-top">
+                  <p id="s-bio" class="small mb-3">Kratka biografija majstora/usluga.</p>
+                  <button class="btn btn-outline-primary w-100" onclick="APP.startChat()"><i class="bi bi-chat-dots me-1"></i> Pošalji poruku</button>
+                </div>
+              </div>
+
+              <div class="card mt-3">
+                <div class="card-body">
+                  <h6 class="fw-bold">Privatni chat</h6>
+                  <div id="chatBox" class="chat-box p-2 mb-2"></div>
+                  <form onsubmit="APP.sendChat(event)" class="d-flex gap-2">
+                    <input id="chatInput" class="form-control" placeholder="Napiši poruku..."/>
+                    <button class="btn btn-brand text-white"><i class="bi bi-send"></i></button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section data-view id="view-profile" class="hidden">
+          <div class="card p-3 p-md-4">
+            <div class="d-flex align-items-center gap-3">
+              <img id="p-avatar" src="https://i.pravatar.cc/120?img=11" class="rounded-circle" width="80" height="80">
+              <div>
+                <h4 id="p-name" class="fw-bold mb-0">Ime korisnika</h4>
+                <div class="text-muted" id="p-email">email@example.com</div>
+              </div>
+            </div>
+            <div class="row g-3 mt-2">
+              <div class="col-md-8">
+                <label class="form-label">Kratka biografija</label>
+                <textarea id="p-bio" class="form-control" rows="4" placeholder="Napiši ko si i čime se baviš..."></textarea>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Grad</label>
+                <input id="p-city" class="form-control" placeholder="npr. Sarajevo">
+                <label class="form-label mt-3">Kontakt telefon</label>
+                <input id="p-phone" class="form-control" placeholder="npr. 061 123 456">
+                <button class="btn btn-brand text-white w-100 mt-3" onclick="APP.saveProfile()">Spasi profil</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- INBOX (conversations) -->
+        <section data-view id="view-inbox" class="hidden">
+          <div class="row g-3">
+            <div class="col-lg-4">
+              <div class="card"><div class="list-group list-group-flush" id="threadList"></div></div>
+            </div>
+            <div class="col-lg-8">
+              <div class="card p-3">
+                <div id="threadTitle" class="fw-bold mb-2">Odaberi razgovor</div>
+                <div id="threadBox" class="chat-box p-2 mb-2"></div>
+                <form onsubmit="APP.sendThread(event)" class="d-flex gap-2">
+                  <input id="threadInput" class="form-control" placeholder="Poruka..."/>
+                  <button class="btn btn-brand text-white"><i class="bi bi-send"></i></button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <footer class="bg-white border-top py-4">
+      <div class="container shell d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <small class="text-muted">© <span id="year"></span> Usluge.ba</small>
+        <ul class="nav small">
+          <li class="nav-item"><a class="nav-link px-2 text-muted">O nama</a></li>
+          <li class="nav-item"><a class="nav-link px-2 text-muted">Kontakt</a></li>
+          <li class="nav-item"><a class="nav-link px-2 text-muted">Uslovi korištenja</a></li>
+        </ul>
+      </div>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+      // 1) UNESI SVOJ FIREBASE KONFIG OVDJE ↓  (Project settings » General » Your apps)
+      const firebaseConfig = {
+        
+    apiKey: "AIzaSyBEl36XcfuiTWwzaceFxQhgU77lE85v910",
+    authDomain: "usluge1ba.firebaseapp.com",
+    projectId: "usluge1ba",
+    storageBucket: "usluge1ba.firebasestorage.app",
+    messagingSenderId: "1042128229737",
+    appId: "1:1042128229737:web:344858b40dfadcfc8759f8",
+    measurementId: "G-S8JPY5NK9Y"
+  
+
+      };
+
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, serverTimestamp, query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const storage = getStorage(app);
+
+      const CATEGORIES = [
+        { key:'elektricar', label:'Električar', icon:'bi-lightbulb' },
+        { key:'vodoinstalater', label:'Vodoinstalater', icon:'bi-droplet' },
+        { key:'gradjevina', label:'Građevinski radovi', icon:'bi-nut' },
+        { key:'kucni', label:'Kućni majstor', icon:'bi-tools' },
+        { key:'casovi', label:'Časovi', icon:'bi-easel' },
+        { key:'ljepota', label:'Ljepota i zdravlje', icon:'bi-heart' },
+        { key:'auto', label:'Auto mehanika', icon:'bi-car-front' },
+        { key:'ciscenje', label:'Čišćenje', icon:'bi-broom' },
+        { key:'prevodjenje', label:'Prevođenje', icon:'bi-chat-square-dots' },
+        { key:'dostava', label:'Dostava', icon:'bi-truck' },
+        { key:'ostalo', label:'Ostalo', icon:'bi-grid-3x3-gap' },
+      ];
+
+      const APP = {
+        pageSize: 9,
+        state: { user:null, view:'home', cat:null, page:1, list:[], currentListing:null, currentThread:null },
+        el: id=>document.getElementById(id),
+        show(id){ document.querySelectorAll('[data-view]').forEach(v=>v.classList.add('hidden')); APP.el(id).classList.remove('hidden') },
+        route(path){
+          if(path==='/') { history.pushState({},'', '#/'); APP.show('view-home') }
+          else if(path==='/login'){ history.pushState({},'','#/login'); APP.show('view-login') }
+          else if(path==='/register'){ history.pushState({},'','#/register'); APP.show('view-register') }
+          else if(path==='/new'){ if(!APP.state.user) return APP.route('/login'); history.pushState({},'','#/new'); APP.populateCats(); APP.show('view-new') }
+          else if(path.startsWith('/category/')){ const cat=path.split('/')[2]; APP.openCategory(cat) }
+          else if(path.startsWith('/listing/')){ const id=path.split('/')[2]; APP.openListing(id) }
+          else if(path==='/profile'){ if(!APP.state.user) return APP.route('/login'); APP.openProfile(APP.state.user.uid) }
+          else if(path.startsWith('/profile/')){ const uid=path.split('/')[2]; APP.openProfile(uid) }
+          else if(path==='/inbox'){ if(!APP.state.user) return APP.route('/login'); APP.openInbox() }
+        },
+        searchFromNav(e){ e.preventDefault(); const q = APP.el('navSearch').value.trim(); if(!q) return; // demo: otvori kategoriju "ostalo"
+          APP.route('/category/ostalo'); APP.el('f-q').value=q; APP.applyFilters(); },
+
+        /* AUTH */
+        async handleLogin(e){ e.preventDefault(); const email=APP.el('login-email').value, pass=APP.el('login-pass').value; await signInWithEmailAndPassword(auth,email,pass); },
+        async handleRegister(e){ e.preventDefault(); const name=APP.el('reg-name').value, email=APP.el('reg-email').value, pass=APP.el('reg-pass').value; const {user}=await createUserWithEmailAndPassword(auth,email,pass); await updateProfile(user,{displayName:name}); await setDoc(doc(db,'profiles',user.uid),{ name, bio:'', city:'', phone:'', createdAt:serverTimestamp() }); APP.route('/profile'); },
+        async logout(){ await signOut(auth) },
+
+        /* HOME */
+        renderCats(){
+          const grid = APP.el('catGrid');
+          grid.innerHTML = CATEGORIES.map(c=>`<div class="col"><a class="text-decoration-none text-reset" onclick="APP.route('/category/${c.key}')"><div class="cat-tile p-3 h-100 d-flex flex-column align-items-center text-center"><i class="bi ${c.icon} cat-icon"></i><div class="small mt-2">${c.label}</div></div></a></div>`).join('');
+        },
+        async renderFeatured(){
+          const qs = query(collection(db,'listings'), orderBy('createdAt','desc'), limit(6));
+          onSnapshot(qs, snap=>{
+            const cont = APP.el('featured');
+            cont.innerHTML = snap.docs.map(d=>APP.card({ id:d.id, ...d.data() })).join('');
+          });
+        },
+        card(it){
+          const starsFull = Math.floor(it.avgRating||0);
+          const half = (it.avgRating||0) - starsFull >= .5;
+          return `<div class="col-12 col-md-6 col-lg-4"><div class="card h-100"><img class="listing-thumb" src="${(it.photos&&it.photos[0])||'https://images.unsplash.com/photo-1581092921461-eab62e97a780?q=80&w=1200&auto=format&fit=crop'}" alt="${it.title}"><div class="card-body"><span class="badge rounded-pill badge-cat mb-2">${APP.catLabel(it.cat)}</span><h6 class="mb-1">${it.title}</h6><p class="text-muted small mb-2">${it.city||''}</p><div class="d-flex justify-content-between align-items-center"><span class="price">${it.poa?'Na upit':(it.price?it.price+' BAM':'')}</span><div class="rating small">${'<i class="bi bi-star-fill"></i>'.repeat(starsFull)}${half?'<i class="bi bi-star-half"></i>':''}${'<i class="bi bi-star"></i>'.repeat(5 - starsFull - (half?1:0))}<span class="text-muted">(${it.reviewsCount||0})</span></div></div><div class="mt-2 d-flex gap-2"><a class="btn btn-outline-primary btn-sm" onclick="APP.route('/listing/${it.id}')">Detalji</a><a class="btn btn-primary btn-sm text-white" onclick="APP.openSellerProfile('${it.ownerId}')">Profil</a></div></div></div></div>`
+        },
+        catLabel(key){ return CATEGORIES.find(c=>c.key===key)?.label || 'Kategorija' },
+
+        /* CATEGORY */
+        async openCategory(cat){ history.pushState({},'',`#/category/${cat}`); APP.show('view-category'); APP.el('catTitle').textContent=APP.catLabel(cat); APP.el('crumbCat').textContent=APP.catLabel(cat); APP.state.cat=cat; APP.applyFilters(); },
+        async applyFilters(){
+          const qStr = APP.el('f-q').value.toLowerCase();
+          const min = parseFloat(APP.el('f-min').value)||null, max=parseFloat(APP.el('f-max').value)||null;
+          const novo = APP.el('f-novo').checked, kor=APP.el('f-kor').checked; const sort=APP.el('f-sort').value;
+          let qsRef = query(collection(db,'listings'), where('cat','==',APP.state.cat));
+          const snap = await getDocs(qsRef); let list = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+          if(qStr) list = list.filter(it=> (it.title||'').toLowerCase().includes(qStr) || (it.desc||'').toLowerCase().includes(qStr));
+          if(min!==null) list = list.filter(it=> (it.price||0)>=min );
+          if(max!==null) list = list.filter(it=> (it.price||0)<=max );
+          if(novo && !kor) list = list.filter(it=> it.condition==='novo');
+          if(kor && !novo) list = list.filter(it=> it.condition==='koristeno');
+          switch(sort){ case 'cheap': list.sort((a,b)=> (a.price||0)-(b.price||0)); break; case 'exp': list.sort((a,b)=> (b.price||0)-(a.price||0)); break; case 'rate': list.sort((a,b)=> (b.avgRating||0)-(a.avgRating||0)); break; default: list.sort((a,b)=> (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)); }
+          APP.state.list=list; APP.renderPage(1);
+        },
+        renderPage(n){ const per=APP.pageSize; const total=APP.state.list.length; const pages=Math.max(1,Math.ceil(total/per)); const slice=APP.state.list.slice((n-1)*per, n*per); APP.el('listings').innerHTML=slice.map(APP.card).join(''); APP.renderPager(n,pages); APP.el('resultCount').textContent=`Prikazano: ${slice.length} od ${total} oglasa`; },
+        renderPager(p, pages){ const ul=APP.el('pager'); const li=(label,dis,t)=>`<li class="page-item ${dis?'disabled':''}"><a class="page-link" href="#" onclick="event.preventDefault(); ${!dis?`APP.renderPage(${t})`:''}">${label}</a></li>`; let html=li('Prethodna',p<=1,p-1); for(let i=1;i<=pages;i++){ html+=`<li class="page-item ${i===p?'active':''}"><a class="page-link" href="#" onclick="event.preventDefault(); APP.renderPage(${i})">${i}</a></li>` } html+=li('Sljedeća',p>=pages,p+1); ul.innerHTML=html; },
+
+        /* NEW LISTING */
+        populateCats(){ APP.el('new-cat').innerHTML = CATEGORIES.map(c=>`<option value="${c.key}">${c.label}</option>`).join('') },
+        async submitListing(e){ e.preventDefault(); if(!auth.currentUser) return APP.route('/login');
+          const title=APP.el('new-title').value.trim(), cat=APP.el('new-cat').value, desc=APP.el('new-desc').value.trim();
+          const price = parseFloat(APP.el('new-price').value)||null; const poa=APP.el('new-poa').checked; const city=APP.el('new-city').value.trim();
+          const photosInput=APP.el('new-photos'); const files=[...photosInput.files].slice(0,6);
+          const ownerId=auth.currentUser.uid;
+          const docRef = await addDoc(collection(db,'listings'), { title, cat, desc, price, poa, city, ownerId, condition:'novo', createdAt:serverTimestamp(), avgRating:0, reviewsCount:0, photos:[] });
+          const urls=[]; for(const f of files){ const r=ref(storage,`listings/${docRef.id}/${f.name}`); await uploadBytes(r,f); urls.push(await getDownloadURL(r)); }
+          await updateDoc(doc(db,'listings',docRef.id), { photos:urls });
+          APP.route(`/listing/${docRef.id}`);
+        },
+
+        /* LISTING DETAILS */
+        async openListing(id){ history.pushState({},'',`#/listing/${id}`); APP.show('view-listing'); const d=await getDoc(doc(db,'listings',id)); if(!d.exists()) return alert('Oglas nije pronađen'); const it={ id:d.id, ...d.data() }; APP.state.currentListing=it; APP.renderListing(it); APP.listenReviews(id); },
+        renderListing(it){ APP.el('l-title').textContent=it.title; APP.el('l-cat').textContent=APP.catLabel(it.cat); APP.el('l-city').textContent=it.city||''; APP.el('l-desc').textContent=it.desc||''; APP.el('l-price').textContent=it.poa?'Na upit': (it.price?`${it.price} BAM`:'' ); APP.el('l-upit').textContent = it.poa? 'Cijena dostupna na upit' : '';
+          const starsFull = Math.floor(it.avgRating||0); const half=(it.avgRating||0)-starsFull>=.5; APP.el('l-rating').innerHTML = `${'<i class="bi bi-star-fill"></i>'.repeat(starsFull)}${half?'<i class="bi bi-star-half"></i>':''}${'<i class="bi bi-star"></i>'.repeat(5 - starsFull - (half?1:0))} <span class="text-muted small">(${it.reviewsCount||0})</span>`;
+          // gallery
+          const inner = APP.el('galleryInner'); const photos = it.photos && it.photos.length? it.photos : ['https://images.unsplash.com/photo-1581092921461-eab62e97a780?q=80&w=1200&auto=format&fit=crop']; inner.innerHTML = photos.map((u,i)=>`<div class="carousel-item ${i===0?'active':''}"><img src="${u}" class="d-block w-100" style="height:360px;object-fit:cover"></div>`).join('');
+          // seller
+          APP.loadSeller(it.ownerId);
+          // chat init
+          APP.initChat(it.ownerId, it.id);
+        },
+
+        async loadSeller(uid){ const p=await getDoc(doc(db,'profiles',uid)); const data=p.data()||{name:'Korisnik'}; APP.el('s-name').textContent=data.name||'Korisnik'; APP.el('s-bio').textContent=data.bio||''; APP.el('s-profile').setAttribute('onclick',`APP.route('/profile/${uid}')`); },
+
+        /* REVIEWS */
+        listenReviews(listingId){ const refCol=collection(db,'listings',listingId,'reviews'); const qy=query(refCol, orderBy('createdAt','desc')); onSnapshot(qy, snap=>{ const arr=snap.docs.map(d=>({id:d.id, ...d.data()})); APP.el('revCount').textContent=`${arr.length} recenzija`; APP.el('revList').innerHTML = arr.map(r=>`<div><div class="d-flex align-items-center gap-2"><strong>${r.authorName||'Korisnik'}</strong><span class="badge bg-light text-dark">${r.rating}★</span><small class="text-muted">${new Date(r.createdAt?.seconds*1000||Date.now()).toLocaleDateString()}</small></div><div class="text-muted">${r.text}</div></div>`).join(''); }); },
+        async submitReview(e){ e.preventDefault(); if(!auth.currentUser) return APP.route('/login'); const l=APP.state.currentListing; const rating=parseInt(APP.el('revRating').value); const text=APP.el('revText').value.trim(); const authorName=auth.currentUser.displayName||'Korisnik'; await addDoc(collection(db,'listings',l.id,'reviews'), { rating, text, authorId:auth.currentUser.uid, authorName, createdAt:serverTimestamp() }); APP.el('revText').value=''; // update aggregates
+          const revSnap=await getDocs(collection(db,'listings',l.id,'reviews')); const arr=revSnap.docs.map(d=>d.data()); const avg = arr.reduce((s,x)=>s+x.rating,0)/arr.length; await updateDoc(doc(db,'listings',l.id), { avgRating:avg, reviewsCount:arr.length }); },
+
+        /* PROFILE */
+        async openProfile(uid){ history.pushState({},'', uid===APP.state.user?.uid? '#/profile' : `#/profile/${uid}`); APP.show('view-profile'); const p=await getDoc(doc(db,'profiles',uid)); const data=p.data()||{}; APP.el('p-name').textContent=data.name||'-'; APP.el('p-email').textContent=APP.state.user && uid===APP.state.user.uid ? (auth.currentUser.email||'') : ''; APP.el('p-bio').value=data.bio||''; APP.el('p-city').value=data.city||''; APP.el('p-phone').value=data.phone||''; APP.el('p-avatar').src = `https://i.pravatar.cc/120?u=${uid}`; APP.state.profileUid=uid; },
+        async saveProfile(){ const uid=APP.state.user.uid; await setDoc(doc(db,'profiles',uid), { name:auth.currentUser.displayName||'Korisnik', bio:APP.el('p-bio').value, city:APP.el('p-city').value, phone:APP.el('p-phone').value }, { merge:true }); alert('Profil spašen ✅') },
+
+        /* CHAT */
+        convId(ownerId, listingId){ const a=auth.currentUser?.uid||'anon'; const arr=[a, ownerId, listingId]; return arr.join('_'); },
+        initChat(ownerId, listingId){ APP.state.currentThread={ ownerId, listingId, id: APP.convId(ownerId, listingId) }; const box=APP.el('chatBox'); box.innerHTML=''; if(!auth.currentUser) return box.innerHTML='<div class="p-2 text-muted">Prijavi se da pošalješ poruku.</div>'; const convRef=doc(db,'conversations',APP.state.currentThread.id); const msgs=collection(convRef,'messages'); const qy=query(msgs, orderBy('createdAt','asc')); onSnapshot(qy, snap=>{ box.innerHTML = snap.docs.map(d=>{ const m=d.data(); const mine=m.authorId===auth.currentUser.uid; return `<div class="d-flex ${mine?'justify-content-end':''}"><div class="msg ${mine?'me':'them'}">${m.text}</div></div>` }).join(''); box.scrollTop=box.scrollHeight; }); },
+        async startChat(){ if(!auth.currentUser) return APP.route('/login'); /* no-op; chat init already */ },
+        async sendChat(e){ e.preventDefault(); const input=APP.el('chatInput'); const text=input.value.trim(); if(!text) return; const t=APP.state.currentThread; const convRef=doc(db,'conversations',t.id); await setDoc(convRef, { lastAt:serverTimestamp(), listingId:t.listingId, users:[auth.currentUser.uid, t.ownerId] }, {merge:true}); await addDoc(collection(convRef,'messages'), { text, authorId:auth.currentUser.uid, createdAt:serverTimestamp() }); input.value=''; },
+
+        /* INBOX */
+        async openInbox(){ history.pushState({},'','#/inbox'); APP.show('view-inbox'); const qy=query(collection(db,'conversations'), orderBy('lastAt','desc')); onSnapshot(qy, snap=>{ const uid=auth.currentUser.uid; APP.el('threadList').innerHTML = snap.docs.filter(d=> (d.data().users||[]).includes(uid)).map(d=>{ const c=d.data(); return `<button class="list-group-item list-group-item-action" onclick="APP.openThread('${d.id}')"><div class="fw-semibold">Razgovor</div><small class="text-muted">Listing: ${c.listingId}</small></button>` }).join(''); }); },
+        async openThread(id){ APP.state.currentThread={ id }; APP.el('threadTitle').textContent = 'Razgovor'; const box=APP.el('threadBox'); const qy=query(collection(db,'conversations',id,'messages'), orderBy('createdAt','asc')); onSnapshot(qy, snap=>{ box.innerHTML = snap.docs.map(d=>{ const m=d.data(); const mine=m.authorId===auth.currentUser.uid; return `<div class="d-flex ${mine?'justify-content-end':''}"><div class="msg ${mine?'me':'them'}">${m.text}</div></div>` }).join(''); box.scrollTop=box.scrollHeight; }); },
+        async sendThread(e){ e.preventDefault(); const text=APP.el('threadInput').value.trim(); if(!text||!APP.state.currentThread) return; const convRef=doc(db,'conversations',APP.state.currentThread.id); await setDoc(convRef, { lastAt:serverTimestamp() }, {merge:true}); await addDoc(collection(convRef,'messages'), { text, authorId:auth.currentUser.uid, createdAt:serverTimestamp() }); APP.el('threadInput').value=''; },
+
+        /* REVIEWS on HOME (sample) */
+        async renderHomeReviews(){ const snaps = await getDocs(collection(db,'listings')); const revBlocks=[]; for(const d of snaps.docs.slice(0,2)){ const revs = await getDocs(query(collection(db,'listings',d.id,'reviews'), orderBy('createdAt','desc'), limit(1))); revs.forEach(r=>{ const v=r.data(); revBlocks.push(`<div class="col-12 col-md-6"><div class="p-3 bg-white border rounded-3 h-100"><div class="d-flex align-items-center gap-2 mb-1"><img class="rounded-circle" src="https://i.pravatar.cc/100?u=${v.authorId}" width="44" height="44"><div><div class="fw-semibold">${v.authorName||'Korisnik'}</div><div class="small text-muted">${(new Date(v.createdAt?.seconds*1000||Date.now())).toLocaleDateString()}</div></div></div><div class="small mb-1"><span class="badge bg-light text-dark">${v.rating}★</span></div><div class="text-muted">${v.text}</div></div></div>`); }); }
+          APP.el('homeReviews').innerHTML = revBlocks.join(''); },
+
+        /* INIT */
+        async init(){ document.getElementById('year').textContent=new Date().getFullYear(); APP.renderCats(); APP.renderFeatured(); APP.renderHomeReviews(); onAuthStateChanged(auth, user=>{ APP.state.user=user||null; document.getElementById('authLinks').classList.toggle('hidden', !!user); document.getElementById('userMenu').classList.toggle('hidden', !user); APP.el('userNameShort').textContent = user?.displayName?.split(' ')[0]||'Profil'; });
+          // Router
+          const handleHash=()=>{ const h=location.hash.replace('#',''); if(!h||h==='/') APP.route('/'); else APP.route(h); }; window.addEventListener('popstate', handleHash); handleHash(); }
+      };
+      window.APP=APP;
+      APP.init();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
