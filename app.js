@@ -31,7 +31,7 @@ const CATEGORIES = [
   { key:'ciscenje', label:'Čišćenje', icon:'bi-bucket' },
   { key:'prevodjenje', label:'Prevođenje', icon:'bi-chat-square-dots' },
   { key:'dostava', label:'Dostava', icon:'bi-truck' },
-  { key:'tutori', label:'Tutori', icon:'bi-mortarboard' },
+  { key:'foto', label:'Fotografija i Video', icon:'bi-camera' },
   { key:'ostalo', label:'Ostalo', icon:'bi-grid-3x3-gap' },
 ];
 
