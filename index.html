@@ -15,6 +15,22 @@
         --bg:#f7f9fc;         /* svijetla pozadina */
         --radius:16px;
       }
+
+      html, body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1; /* zauzima sav prostor između headera i footera */
+}
+
+footer {
+  margin-top: auto; /* gura footer na dno */
+}
+
       body{ background:var(--bg); color:var(--text) }
       .shell{ max-width:1180px }
       .nav-shadow{ box-shadow:0 6px 30px rgba(0,0,0,.04) }
