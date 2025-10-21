@@ -1,6 +1,19 @@
 <!doctype html>
 <html lang="bs">
   <head>
+      <!-- Tema: no-flash bootstrap -->
+  <script>
+    (function() {
+      try {
+        var key = 'usluge_theme';
+        var stored = localStorage.getItem(key);
+        var systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var theme = stored || (systemDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch(e) {}
+    })();
+  </script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Usluge.ba — Marketplace usluga</title>
@@ -27,6 +40,24 @@
             <li class="nav-item"><a class="nav-link" onclick="APP.route('/login')">Prijava</a></li>
             <li class="nav-item"><a class="nav-link" onclick="APP.route('/register')">Registracija</a></li>
           </ul>
+          <!-- Prekidač teme (slider) -->
+<div class="ms-lg-2">
+  <button id="theme-toggle"
+          class="theme-toggle"
+          aria-label="Promijeni temu"
+          aria-pressed="false"
+          title="Promijeni temu">
+    <span class="toggle-track">
+      <span class="toggle-thumb"></span>
+    </span>
+    <span class="toggle-icons" aria-hidden="true">
+      <i class="bi bi-sun icon-sun"></i>
+      <i class="bi bi-moon icon-moon"></i>
+    </span>
+  </button>
+</div>
+
+
           <div class="ms-lg-2 hidden" id="userMenu">
             <div class="dropdown">
               <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
@@ -354,5 +385,34 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- JS app -->
     <script type="module" src="./app.js"></script>
+    
+    <script>
+  (function(){
+    const html = document.documentElement;
+    const btn = document.getElementById('theme-toggle');
+    const STORAGE_KEY = 'usluge_theme';
+
+    function setTheme(theme, animate = true){
+      html.setAttribute('data-theme', theme);
+      localStorage.setItem(STORAGE_KEY, theme);
+      if(animate){
+        html.classList.add('theme-animating');
+        setTimeout(()=>html.classList.remove('theme-animating'), 300);
+      }
+    }
+
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initial = stored || (systemDark ? 'dark' : 'light');
+    setTheme(initial, false);
+
+    btn?.addEventListener('click', ()=>{
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      setTheme(next, true);
+    });
+  })();
+</script>
+
+
   </body>
 </html>
