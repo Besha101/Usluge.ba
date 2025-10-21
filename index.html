@@ -119,6 +119,7 @@
                     <input id="login-pass" type="password" class="form-control" required>
                   </div>
                   <button class="btn btn-brand text-white w-100">Prijavi se</button>
+                  <div id="login-error" class="alert alert-danger mt-2 d-none"></div>
                 </form>
                 <p class="small mt-3">Nemaš račun? <a onclick="APP.route('/register')">Registruj se</a></p>
               </div>
@@ -136,6 +137,7 @@
                   <div class="mb-3"><label class="form-label">Email</label><input id="reg-email" type="email" class="form-control" required></div>
                   <div class="mb-3"><label class="form-label">Lozinka</label><input id="reg-pass" type="password" class="form-control" minlength="6" required></div>
                   <button class="btn btn-brand text-white w-100">Kreiraj račun</button>
+                  <div id="reg-error" class="alert alert-danger mt-2 d-none"></div>
                 </form>
               </div>
             </div>

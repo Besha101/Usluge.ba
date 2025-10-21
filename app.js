@@ -12,12 +12,13 @@ const firebaseConfig = {
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, serverTimestamp, query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+await setPersistence(auth, browserLocalPersistence);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
@@ -40,6 +41,15 @@ const APP = {
   pageSize: 9,
   state: { user:null, view:'home', cat:null, page:1, list:[], currentListing:null, currentThread:null },
   el: id=>document.getElementById(id),
+    showError(id, msg){
+    const box = document.getElementById(id);
+    if(!box) return;
+    box.textContent = msg;
+    box.classList.remove('d-none');
+    // auto-hide nakon 6 sekundi
+    setTimeout(()=> box.classList.add('d-none'), 6000);
+  },
+
   show(id){ document.querySelectorAll('[data-view]').forEach(v=>v.classList.add('hidden')); APP.el(id).classList.remove('hidden') },
   route(path){
     if(path==='/') { history.pushState({},'', '#/'); APP.show('view-home') }
@@ -55,8 +65,43 @@ const APP = {
   searchFromNav(e){ e.preventDefault(); const q = APP.el('navSearch').value.trim(); if(!q) return; APP.route('/category/ostalo'); APP.el('f-q').value=q; APP.applyFilters(); },
 
   /* AUTH */
-  async handleLogin(e){ e.preventDefault(); const email=APP.el('login-email').value, pass=APP.el('login-pass').value; await signInWithEmailAndPassword(auth,email,pass); },
-  async handleRegister(e){ e.preventDefault(); const name=APP.el('reg-name').value, email=APP.el('reg-email').value, pass=APP.el('reg-pass').value; const {user}=await createUserWithEmailAndPassword(auth,email,pass); await updateProfile(user,{displayName:name}); await setDoc(doc(db,'profiles',user.uid),{ name, bio:'', city:'', phone:'', createdAt:serverTimestamp() }); APP.route('/profile'); },
+  /* AUTH */
+async handleLogin(e){
+  e.preventDefault();
+  const email = APP.el('login-email').value.trim();
+  const pass  = APP.el('login-pass').value.trim();
+
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    APP.route('/');  // preusmjeri na početnu stranicu
+  } catch(err) {
+    APP.showError('login-error', niceAuthError(err));
+  }
+},
+
+async handleRegister(e){
+  e.preventDefault();
+  const name  = APP.el('reg-name').value.trim();
+  const email = APP.el('reg-email').value.trim();
+  const pass  = APP.el('reg-pass').value.trim();
+
+  try {
+    const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(user, { displayName: name });
+    await setDoc(doc(db, 'profiles', user.uid), {
+      name,
+      bio: '',
+      city: '',
+      phone: '',
+      createdAt: serverTimestamp()
+    }, { merge: true });
+
+    APP.route('/profile');
+  } catch(err) {
+    APP.showError('reg-error', niceAuthError(err));
+  }
+},
+
   async logout(){ await signOut(auth) },
 
   /* HOME */
@@ -354,6 +399,21 @@ const APP = {
     window.addEventListener('popstate', handleHash);
     handleHash();
   }
+  
 };
+function niceAuthError(err){
+  const code = (err?.code || '').replace('auth/', '');
+  switch(code){
+    case 'invalid-email': return 'Email nije ispravan.';
+    case 'missing-password': return 'Unesi lozinku.';
+    case 'weak-password': return 'Lozinka mora imati najmanje 6 karaktera.';
+    case 'email-already-in-use': return 'Ovaj email je već registriran.';
+    case 'invalid-credential':
+    case 'wrong-password': return 'Pogrešan email ili lozinka.';
+    case 'user-not-found': return 'Nismo našli korisnika sa tim emailom.';
+    default: return 'Došlo je do greške. Pokušaj ponovo.';
+  }
+}
+
 window.APP=APP;
 APP.init();
