@@ -388,8 +388,12 @@ async handleRegister(e){
     onAuthStateChanged(auth, user=>{
       APP.state.user=user||null;
       document.getElementById('authLinks').classList.toggle('hidden', !!user);
-      document.getElementById('userMenu').classList.toggle('hidden', !user);
-      document.getElementById('userNameShort').textContent = user?.displayName?.split(' ')[0]||'Profil';
+document.getElementById('userMenu').classList.toggle('hidden', !user);
+
+// avatar u navu (ako postoji element)
+const navAv = document.getElementById('nav-avatar');
+if (navAv) navAv.src = `https://i.pravatar.cc/100?u=${user?.uid||'guest'}`;
+
     });
     const handleHash=()=>{
       const h=location.hash.replace('#','');

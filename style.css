@@ -24,8 +24,27 @@ footer {
 body{ background:var(--bg); color:var(--text) }
 .shell{ max-width:1180px }
 .nav-shadow{ box-shadow:0 6px 30px rgba(0,0,0,.04) }
-.btn-brand{ background:var(--brand); border-color:var(--brand) }
-.btn-brand:hover{ background:var(--brand-2); border-color:var(--brand-2) }
+/* Dugme Objavi oglas – glatka tranzicija boje */
+.btn-brand{
+  background-color: var(--brand) !important;
+  border-color: var(--brand) !important;
+  color:#fff;
+  transition: background-color .35s ease, border-color .35s ease;
+}
+
+/* LIGHT tema: svjetlija plava na hover */
+html:not([data-theme="dark"]) .btn-brand:hover{
+  background-color: #3fa2ff !important;  /* svjetlija azurno plava */
+  border-color: #3fa2ff !important;
+}
+
+/* DARK tema: još svjetlija nijansa na hover (razlikuje se od #60a5fa) */
+html[data-theme="dark"] .btn-brand:hover{
+  background-color: #8cc8ff !important;  /* vidljivo svjetlije od #60a5fa */
+  border-color: #8cc8ff !important;
+}
+
+
 .logo{ font-weight:800; letter-spacing:.3px }
 .logo .dot{ color:var(--brand) }
 .card{ border-radius:var(--radius) }
@@ -193,5 +212,35 @@ html[data-theme="dark"] .toggle-track {
     0 1px 3px rgba(0,0,0,0.8);              /* vanjska sjenka za dubinu */
   transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
+/* Avatar dugme bez okvira/shadowa u dark temi */
+html[data-theme="dark"] #userMenu .btn {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* === Avatar outline === */
+.profile-outline {
+  border: 2px solid var(--brand);
+  box-shadow: 0 0 6px rgba(13,110,253,0.35);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+/* Hover efekt */
+.avatar-btn:hover .profile-outline {
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(13,110,253,0.6);
+}
+
+/* Dark tema – hladniji, svijetliji outline */
+html[data-theme='dark'] .profile-outline {
+  border-color: #60a5fa;
+  box-shadow: 0 0 6px rgba(96,165,250,0.4);
+}
+
+html[data-theme='dark'] .avatar-btn:hover .profile-outline {
+  box-shadow: 0 0 10px rgba(96,165,250,0.7);
+}
+
+
 
 
