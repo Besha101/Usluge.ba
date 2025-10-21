@@ -44,3 +44,154 @@ body{ background:var(--bg); color:var(--text) }
 .msg{ padding:.5rem .75rem; border-radius:12px; margin:.25rem 0; display:inline-block; max-width:82% }
 .msg.me{ background:var(--accent) }
 .msg.them{ background:#f1f5f9 }
+/* === DARK THEME (konsolidovano) === */
+html[data-theme='dark']{
+  --brand:#60a5fa;
+  --brand-2:#3b82f6;
+  --accent:#1e293b;
+  --text:#e2e8f0;
+  --bg:#0f172a;
+}
+
+/* global */
+html[data-theme='dark'] body{ background:var(--bg); color:var(--text); }
+
+/* navbar + footer (pregazi bg-white) */
+html[data-theme='dark'] .navbar.bg-white,
+html[data-theme='dark'] footer.bg-white{ background:#1e293b !important; color:var(--text); }
+html[data-theme='dark'] footer{ background:#1e293b; }
+
+/* card / chat / sidebar */
+html[data-theme='dark'] .card,
+html[data-theme='dark'] .chat-box{ background:#1e293b; border-color:#334155; color:var(--text); }
+html[data-theme='dark'] .sidebar .card{ background:#1e293b; }
+
+/* kategorije */
+html[data-theme='dark'] .cat-tile{ background:#122033; border-color:#2a3b52; }
+html[data-theme='dark'] .badge-cat{ background:#203044; color:#9cc3ff; }
+
+/* pretraga + filteri */
+html[data-theme='dark'] .input-group-text{ background:#000 !important; color:#fff !important; border-color:#000 !important; }
+html[data-theme='dark'] .form-control,
+html[data-theme='dark'] .form-select{ background:#0f172a; color:var(--text); border:1px solid #334155; }
+html[data-theme='dark'] .form-control::placeholder{ color:#94a3b8; }
+
+/* linkovi/tekst */
+html[data-theme='dark'] .nav-link,
+html[data-theme='dark'] .text-muted{ color:#cbd5e1 !important; }
+
+/* dropdown */
+html[data-theme='dark'] .dropdown-menu{ background:#1f2a37; color:var(--text); border-color:#334155; }
+html[data-theme='dark'] .dropdown-item{ color:var(--text); }
+html[data-theme='dark'] .dropdown-item:hover{ background:#0f172a; }
+
+/* carousel ikonice */
+html[data-theme='dark'] .carousel-control-prev-icon,
+html[data-theme='dark'] .carousel-control-next-icon{ filter: invert(1); }
+
+/* === Theme switch (slider) – finalna verzija === */
+.theme-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:.5rem;
+  padding:.25rem .5rem;
+  border-radius:999px;
+  background:#fff;
+  color:var(--text);
+  cursor:pointer;
+  line-height:1;
+  border:1px solid transparent;
+  transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* lagani sjen za light mode */
+.theme-toggle {
+  box-shadow: 0 0 0 1px #e9eef5, 0 2px 8px rgba(0,0,0,.08);
+}
+
+/* u dark modu crna pozadina i okvir */
+html[data-theme="dark"] .theme-toggle{
+  background:#000;
+  border:1px solid #000;
+  box-shadow: 0 0 0 1px #000, 0 2px 10px rgba(0,0,0,.45);
+}
+
+/* Track (pravougaonik unutar dugmeta) */
+.toggle-track{
+  width:44px;
+  height:24px;
+  background:#e9eef5;
+  border-radius:999px;
+  position:relative;
+  transition: background-color 0.3s ease;
+}
+
+/* kuglica – sa „spring“ efektom */
+:root { --thumb-x: 0px; }
+html[data-theme="dark"] { --thumb-x: 17px; }
+
+.toggle-thumb{
+  position:absolute;
+  top:2px;
+  left:2px;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  transform: translateX(var(--thumb-x));
+  transition: transform 420ms cubic-bezier(.34,1.56,.64,1),
+              background-color 240ms ease,
+              box-shadow 240ms ease;
+   background: #545454;           /* svijetlo siva */
+  /* (opcionalno) zadrži blagi sjaj da se vidi na crnom: */
+  box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.12) inset;
+}
+
+/* Light tema: bijela kuglica */
+html:not([data-theme="dark"]) .toggle-thumb {
+  background: #fff; /* čisto bijela za light */
+}
+
+/* Dark tema: sivkasta kuglica */
+html[data-theme="dark"] .toggle-thumb {
+  background: #0c0c0c; /* svijetlo siva za dark */
+  box-shadow:
+    inset 0 0 2px #111827, /* svijetli unutrašnji rub */
+    0 1px 3px rgba(0,0,0,0.6); 
+}
+
+
+.theme-toggle:active .toggle-thumb{
+  transform: translateX(var(--thumb-x)) scale(.92);
+}
+
+/* ikone */
+.toggle-icons{
+  position:relative;
+  width:18px;
+  height:18px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.icon-sun, .icon-moon{
+  position:absolute;
+  transition:opacity .3s ease, transform .3s ease;
+}
+
+html:not([data-theme="dark"]) .icon-sun{ opacity:1; transform:rotate(0deg) }
+html:not([data-theme="dark"]) .icon-moon{ opacity:0; transform:rotate(-90deg) }
+html[data-theme="dark"] .icon-sun{ opacity:0; transform:rotate(90deg) }
+html[data-theme="dark"] .icon-moon{ opacity:1; transform:rotate(0deg) }
+
+/* Dark tema – track s blagom sivkastom zonom */
+html[data-theme="dark"] .toggle-track {
+  background: #111827; /* vrlo tamna siva (nije čista crna) */
+  border: 1px solid #000;
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,0.05),  /* lagani unutrašnji svijetli rub */
+    0 1px 3px rgba(0,0,0,0.8);              /* vanjska sjenka za dubinu */
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+
