@@ -53,8 +53,15 @@ const APP = {
   show(id){ document.querySelectorAll('[data-view]').forEach(v=>v.classList.add('hidden')); APP.el(id).classList.remove('hidden') },
   route(path){
     if(path==='/') { history.pushState({},'', '#/'); APP.show('view-home') }
-    else if(path==='/login'){ history.pushState({},'','#/login'); APP.show('view-login') }
-    else if(path==='/register'){ history.pushState({},'','#/register'); APP.show('view-register') }
+    else if(path==='/login'){
+  if (APP.state.user) return APP.route('/'); // već logovan → na početnu
+  history.pushState({},'','#/login'); APP.show('view-login');
+}
+else if(path==='/register'){
+  if (APP.state.user) return APP.route('/'); // već logovan → na početnu
+  history.pushState({},'','#/register'); APP.show('view-register');
+}
+
     else if(path==='/new'){ if(!APP.state.user) return APP.route('/login'); history.pushState({},'','#/new'); APP.populateCats(); APP.show('view-new') }
     else if(path.startsWith('/category/')){ const cat=path.split('/')[2]; APP.openCategory(cat) }
     else if(path.startsWith('/listing/')){ const id=path.split('/')[2]; APP.openListing(id) }
@@ -385,23 +392,40 @@ async handleRegister(e){
   async init(){
     document.getElementById('year').textContent=new Date().getFullYear();
     APP.renderCats(); APP.renderFeatured(); APP.renderHomeReviews();
-    onAuthStateChanged(auth, user=>{
-      APP.state.user=user||null;
-      document.getElementById('authLinks').classList.toggle('hidden', !!user);
-document.getElementById('userMenu').classList.toggle('hidden', !user);
+    // 1) Sačekaj da Auth vrati početno stanje (prije prvog routinga)
+await new Promise((resolve) => {
+  onAuthStateChanged(auth, user => {
+    APP.state.user = user || null;
 
-// avatar u navu (ako postoji element)
-const navAv = document.getElementById('nav-avatar');
-if (navAv) navAv.src = `https://i.pravatar.cc/100?u=${user?.uid||'guest'}`;
+    // UI toggle
+    document.getElementById('authLinks').classList.toggle('hidden', !!user);
+    document.getElementById('userMenu').classList.toggle('hidden', !user);
 
-    });
-    const handleHash=()=>{
-      const h=location.hash.replace('#','');
-      if(!h||h==='/') APP.route('/');
-      else APP.route(h);
-    };
-    window.addEventListener('popstate', handleHash);
-    handleHash();
+    // avatar
+    const navAv = document.getElementById('nav-avatar');
+    if (navAv) navAv.src = `https://i.pravatar.cc/100?u=${user?.uid||'guest'}`;
+
+    // resolve samo prvi put
+    if (!APP._authReady) { APP._authReady = true; resolve(); }
+  });
+});
+
+// 2) Tek sada bootaj ruter
+const handleHash = () => {
+  const h = location.hash.replace('#','');
+
+  // ako je hash login/register a user već postoji → na početnu
+  if ((h==='/login' || h==='/register') && APP.state.user) {
+    return APP.route('/');
+  }
+
+  if (!h || h==='/') APP.route('/');
+  else APP.route(h);
+};
+
+window.addEventListener('popstate', handleHash);
+handleHash();
+
   }
   
 };
