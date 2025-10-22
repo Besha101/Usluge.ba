@@ -5,7 +5,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDmqAkGl1TVXTOWaqBTJZw_o2D3VJ0XkkY",
   authDomain: "uslugeba-278b6.firebaseapp.com",
   projectId: "uslugeba-278b6",
-  storageBucket: "uslugeba-278b6.firebasestorage.app",
+  storageBucket: "gs://uslugeba-278b6.firebasestorage.app",
   messagingSenderId: "748061595893",
   appId: "1:748061595893:web:ed03a1a71d74560affcdbc",
   measurementId: "G-CVC3XTPRT9"
@@ -14,13 +14,81 @@ const firebaseConfig = {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, serverTimestamp, query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 await setPersistence(auth, browserLocalPersistence);
 const db = getFirestore(app);
 const storage = getStorage(app);
+let cropper = null;
+
+async function hydrateProfileUI(user){
+  const nameEl  = document.getElementById('p-name');
+  const emailEl = document.getElementById('p-email');
+  const imgEl   = document.getElementById('p-avatar');
+  const iconEl  = document.getElementById('p-avatar-icon');
+  if (!nameEl || !emailEl) return;
+
+  // 1) iz Auth
+  nameEl.textContent  = user?.displayName || 'Ime korisnika';
+  emailEl.textContent = user?.email || 'email@example.com';
+
+  if (user?.photoURL && imgEl){
+    imgEl.src = user.photoURL;
+    imgEl.classList.remove('d-none');
+    iconEl?.classList.add('d-none');
+  }
+
+  // 2) pregazi iz Firestore ako postoji
+  try{
+    if (user) {
+      const snap = await getDoc(doc(db, 'profiles', user.uid));
+      if (snap.exists()){
+        const p = snap.data();
+        if (p.name)     nameEl.textContent = p.name;
+        if (p.photoURL && imgEl){
+          imgEl.src = p.photoURL;
+          imgEl.classList.remove('d-none');
+          iconEl?.classList.add('d-none');
+        }
+      }
+    }
+  }catch(e){ console.warn('hydrateProfileUI:', e); }
+}
+
+
+// Pretvori cropper u Blob (krug, PNG) – size možeš mijenjati (512, 256, 1024…)
+async function getCroppedAvatarBlob(size = 512) {
+  return new Promise((resolve, reject) => {
+    if (!cropper) return reject(new Error('Cropper nije spreman'));
+
+    // kvadratno platno 1:1
+    const square = cropper.getCroppedCanvas({
+      width: size,
+      height: size,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high',
+      fillColor: '#000' // koristi se samo kod JPEG-a
+    });
+
+    // isijeci krug na transparentnu pozadinu (PNG)
+    const out = document.createElement('canvas');
+    out.width = out.height = size;
+    const ctx = out.getContext('2d');
+    ctx.clearRect(0, 0, size, size);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, size/2, 0, Math.PI*2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(square, 0, 0, size, size);
+    ctx.restore();
+    out.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png', 1);
+  });
+}
+
 
 const CATEGORIES = [
   { key:'elektricar', label:'Električar', icon:'bi-lightbulb' },
@@ -109,7 +177,17 @@ async handleRegister(e){
   }
 },
 
-  async logout(){ await signOut(auth) },
+  async logout(){
+  await signOut(auth);
+  // ako si bio na zaštićenoj ruti, prebaci na login
+  const h = (location.hash || '#/').replace('#','');
+  if (['/profile','/new','/inbox'].includes(h)) {
+    APP.route('/login');
+  } else {
+    APP.route('/'); // sigurni fallback
+  }
+},
+
 
   /* HOME */
   renderCats(){
@@ -260,28 +338,317 @@ async handleRegister(e){
 
   /* PROFILE */
   async openProfile(uid){
-    history.pushState({},'', uid===APP.state.user?.uid? '#/profile' : `#/profile/${uid}`);
-    APP.show('view-profile');
-    const p=await getDoc(doc(db,'profiles',uid));
-    const data=p.data()||{};
-    APP.el('p-name').textContent=data.name||'-';
-    APP.el('p-email').textContent=APP.state.user && uid===APP.state.user.uid ? (auth.currentUser.email||'') : '';
-    APP.el('p-bio').value=data.bio||'';
-    APP.el('p-city').value=data.city||'';
-    APP.el('p-phone').value=data.phone||'';
-    document.getElementById('p-avatar').src = `https://i.pravatar.cc/120?u=${uid}`;
-    APP.state.profileUid=uid;
-  },
+  history.pushState({},'', uid===APP.state.user?.uid ? '#/profile' : `#/profile/${uid}`);
+  APP.show('view-profile');
+
+  // učitaj profil
+  const p = await getDoc(doc(db,'profiles',uid));
+  const data = p.data() || {};
+
+  // popuni osnovno
+  const resolvedName = data.name || (uid===auth.currentUser?.uid ? auth.currentUser.displayName : '');
+APP.el('p-name').textContent = resolvedName || 'Ime korisnika';
+
+  APP.el('p-email').textContent = uid===auth.currentUser?.uid ? (auth.currentUser.email || '') : '';
+  APP.el('p-bio').value   = data.bio   || '';
+  APP.el('p-city').value  = data.city  || '';
+  APP.el('p-phone').value = data.phone || '';
+
+  // avatar elementi
+  const pAvWrap = document.getElementById('p-avatar-wrap');
+  const pImg    = document.getElementById('p-avatar');
+  const pIcon   = document.getElementById('p-avatar-icon');
+  const fileInp = document.getElementById('p-photo');
+
+  const setAvatar = (url)=>{
+    if(url){ pImg.src=url; pImg.classList.remove('d-none'); pIcon.classList.add('d-none'); }
+    else   { pImg.classList.add('d-none'); pIcon.classList.remove('d-none'); }
+  };
+
+  if (uid === APP.state.user?.uid){
+    // moj profil
+    setAvatar(auth.currentUser.photoURL || data.photoURL || null);
+
+    // klik na sliku -> odabir file-a
+    pAvWrap.onclick = () => fileInp.click();
+
+    // crop modal
+    fileInp.onchange = () => {
+  const f = fileInp.files[0];
+  if (!f) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    // Bootstrap modal s našim stilom
+    const modal = document.createElement('div');
+    modal.className = 'modal fade crop-modal';
+    modal.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h6 class="modal-title">Uredi sliku</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zatvori"></button>
+          </div>
+          <div class="modal-body">
+            <div class="crop-area">
+              <img id="crop-image" src="${e.target.result}" alt="crop">
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+              <div class="text-muted small">Povuci sliku, točkić = zoom.</div>
+              <div class="btn-group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="crop-zoom-in">+</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="crop-zoom-out">−</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="crop-rotate">↻</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="crop-reset">Reset</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="crop-save" class="btn btn-brand text-white">Spremi</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    const cropImgEl = modal.querySelector('#crop-image');
+
+// čekaj da <img> dobije dimenzije pa tek onda inicijaliziraj Cropper
+cropImgEl.addEventListener('load', () => {
+  if (cropper) { try { cropper.destroy(); } catch(_) {} }
+  cropper = new Cropper(cropImgEl, {
+  viewMode: 3,                 // strože ograniči canvas na kontejner
+  dragMode: 'move',
+  aspectRatio: 1,
+  autoCropArea: 1,             // crop box = maksimalan
+  background: false,
+  guides: false,
+  center: true,
+  highlight: false,
+  movable: true,
+  zoomable: true,
+  scalable: false,
+  rotatable: false,
+  cropBoxMovable: false,
+  cropBoxResizable: false,
+  toggleDragModeOnDblclick: false,
+
+ ready() {
+  const C = this.cropper;
+
+  // 0) reset na neutralno (da nema starog scale-a)
+  C.reset();
+
+  // 1) podaci o kontejneru (tvoj postojeći okvir u modalu OSTaje iste veličine)
+  const cont = C.getContainerData();          // {width, height}
+  const fullW = cont.width;
+  const fullH = cont.height;
+
+  // 2) raširi SLIKU (canvas) da POKRIJE CIJELI KONTEJNER (cover po kontejneru)
+  const img = C.getImageData();               // koristi natural dimenzije fajla
+  const coverScale = Math.max(fullW / img.naturalWidth, fullH / img.naturalHeight);
+  const canvasW = img.naturalWidth  * coverScale;
+  const canvasH = img.naturalHeight * coverScale;
+
+  C.setCanvasData({
+    width:  canvasW,
+    height: canvasH,
+    left:   (fullW - canvasW) / 2,
+    top:    (fullH - canvasH) / 2
+  });
+
+  // 3) crop box = najveći mogući KRUG unutar tog kontejnera (ne mičemo modal)
+  const size = Math.min(fullW, fullH) * 0.98; // po želji 0.96–1.00
+  C.setCropBoxData({
+    left: (fullW  - size) / 2,
+    top:  (fullH  - size) / 2,
+    width:  size,
+    height: size
+  });
+}
+
+
+});
+
+
+
+
+
+
+      // kontrole
+      modal.querySelector('#crop-zoom-in').onclick = ()=> cropper.zoom(0.1);
+      modal.querySelector('#crop-zoom-out').onclick = ()=> cropper.zoom(-0.1);
+      modal.querySelector('#crop-rotate').onclick   = ()=> cropper.rotate(90);
+      modal.querySelector('#crop-reset').onclick    = ()=> cropper.reset();
+
+      // Spremi odmah na Firebase Storage i postavi avatar
+// =================== SPREMI — Firebase upload direktno ===================
+const btnSave = modal.querySelector('#crop-save');
+btnSave.onclick = async () => {
+  if (!cropper) { alert('Slika nije spremna.'); return; }
+
+  // UI feedback
+  btnSave.disabled = true;
+  const prevTxt = btnSave.textContent;
+  btnSave.textContent = 'Spremanje 0%…';
+
+  try {
+    // 1) Croppani krug kao PNG (promijeni 512 po želji)
+    const blob = await getCroppedAvatarBlob(512);
+    if (!blob || !blob.size) throw new Error('Prazan blob (canvas).');
+
+    // 2) Putanja – ako nisi logiran, ide u /avatars/public/
+    const uid = auth.currentUser?.uid;
+if (!uid) {
+  alert("Moraš biti prijavljen da bi spremio sliku.");
+  return;
+}
+
+    const r = ref(storage, `users/${uid}/profile/avatar.png`);
+
+
+    // 3) Upload sa progresom
+    const task = uploadBytesResumable(r, blob, { contentType: 'image/png' });
+
+    // WATCHDOG: ako 10s stoji na 0% -> prekini i prijavi
+    let lastPct = 0;
+    const watchdog = setTimeout(() => {
+      if (lastPct === 0) {
+        try { task.cancel(); } catch {}
+        alert('Upload stoji na 0%. Najčešći uzrok: Firebase Storage Rules ne dopuštaju pisanje bez prijave. Prijavi se ili privremeno olabavi rules.');
+        btnSave.disabled = false;
+        btnSave.textContent = prevTxt;
+      }
+    }, 10000);
+
+    task.on('state_changed',
+      (snap) => {
+        const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+        lastPct = pct;
+        btnSave.textContent = `Spremanje ${pct}%…`;
+      },
+      (error) => {
+        clearTimeout(watchdog);
+        console.error('Upload error:', error);
+        alert('Greška pri uploadu: ' + (error?.message || error));
+        btnSave.disabled = false;
+        btnSave.textContent = prevTxt;
+      },
+      async () => {
+        clearTimeout(watchdog);
+        // 4) URL + osvježi UI
+        const url = await getDownloadURL(task.snapshot.ref);
+         const finalUrl = `${url}?t=${Date.now()}`; // cache-bust samo za prikaz
+
+         const pImg  = document.getElementById('p-avatar');
+         const pIcon = document.getElementById('p-avatar-icon');
+         if (pImg)  { pImg.src = finalUrl; pImg.classList.remove('d-none'); }
+        if (pIcon) pIcon.classList.add('d-none');
+
+        const navImg  = document.getElementById('nav-avatar');
+ const navIcon = document.getElementById('nav-avatar-icon');
+ if (navImg)  { navImg.src = finalUrl; navImg.classList.remove('d-none'); }
+        if (navIcon) navIcon.classList.add('d-none');
+
+        // (opciono) upiši u Auth/Firestore – samo ako si logiran
+        try { if (auth?.currentUser) await updateProfile(auth.currentUser, { photoURL: url }); } catch (e) { console.warn('updateProfile:', e); }
+ try { if (auth?.currentUser) await setDoc(doc(db, 'profiles', auth.currentUser.uid), { photoURL: url }, { merge: true }); } catch (e) { console.warn('setDoc:', e); }
+
+        // zatvori modal
+        const bsModal = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
+        bsModal.hide();
+        modal.addEventListener('hidden.bs.modal', () => modal.remove());
+
+        btnSave.disabled = false;
+        btnSave.textContent = 'Spremi';
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    alert('Greška: ' + (err?.message || err));
+    btnSave.disabled = false;
+    btnSave.textContent = prevTxt;
+  }
+};
+
+
+    }, { once:true });
+  };
+  reader.readAsDataURL(f);
+};
+
+
+  } else {
+    // tuđi profil (read-only)
+    setAvatar(data.photoURL || null);
+  }
+
+  APP.state.profileUid = uid;
+}
+,
   async saveProfile(){
-    const uid=APP.state.user.uid;
-    await setDoc(doc(db,'profiles',uid), {
-      name:auth.currentUser.displayName||'Korisnik',
-      bio:APP.el('p-bio').value,
-      city:APP.el('p-city').value,
-      phone:APP.el('p-phone').value
-    }, { merge:true });
+  const uid = APP.state.user.uid;
+  const fileInp = APP.el('p-photo');
+  const file = fileInp && fileInp.files[0] ? fileInp.files[0] : null;
+
+  let photoURL = auth.currentUser.photoURL || null;
+
+  try {
+    // 1) upload nove slike ako je izabrana
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Slika je veća od 2 MB. Smanji je pa pokušaj ponovo.');
+        return;
+      }
+      const path = `users/${uid}/profile/raw/${Date.now()}_${file.name}`;
+      const r = ref(storage, path);
+      await uploadBytes(r, file);
+      photoURL = await getDownloadURL(r);
+      await updateProfile(auth.currentUser, { photoURL });
+    }
+
+    // 2) snimi podatke u Firestore (uključujući sliku)
+    // povuci postojeći profil da sačuvaš postojeće ime ako nema displayName-a
+const profSnap = await getDoc(doc(db, 'profiles', uid));
+const existing = profSnap.data() || {};
+const safeName = existing.name || auth.currentUser.displayName || '';
+
+await setDoc(doc(db, 'profiles', uid), {
+  ...(safeName ? { name: safeName } : {}),   // upiši name samo ako ga stvarno imaš
+  bio:  APP.el('p-bio').value,
+  city: APP.el('p-city').value,
+  phone: APP.el('p-phone').value,
+  ...(photoURL ? { photoURL } : {})
+}, { merge: true });
+
+
+    // 3) osvježi UI
+    const pImg    = document.getElementById('p-avatar');
+    const pIcon   = document.getElementById('p-avatar-icon');
+    const navImg  = document.getElementById('nav-avatar');
+    const navIcon = document.getElementById('nav-avatar-icon');
+
+    if (photoURL) {
+      if (pImg)  { pImg.src = photoURL; pImg.classList.remove('d-none'); }
+      if (pIcon) pIcon.classList.add('d-none');
+      if (navImg){ navImg.src = photoURL; navImg.classList.remove('d-none'); }
+      if (navIcon) navIcon.classList.add('d-none');
+    } else {
+      if (pImg)  pImg.classList.add('d-none');
+      if (pIcon) pIcon.classList.remove('d-none');
+      if (navImg) navImg.classList.add('d-none');
+      if (navIcon) navIcon.classList.remove('d-none');
+    }
+
     alert('Profil spašen ✅');
-  },
+  } catch (e) {
+    console.error(e);
+    alert('Greška pri spremanju profila.');
+  }
+},
+
 
   /* CHAT */
   convId(ownerId, listingId){ const a=auth.currentUser?.uid||'anon'; const arr=[a, ownerId, listingId]; return arr.join('_'); },
@@ -394,17 +761,29 @@ async handleRegister(e){
     APP.renderCats(); APP.renderFeatured(); APP.renderHomeReviews();
     // 1) Sačekaj da Auth vrati početno stanje (prije prvog routinga)
 await new Promise((resolve) => {
-  onAuthStateChanged(auth, user => {
-    APP.state.user = user || null;
+  onAuthStateChanged(auth, user=>{
+  APP.state.user = user || null;
 
-    // UI toggle
-    document.getElementById('authLinks').classList.toggle('hidden', !!user);
-    document.getElementById('userMenu').classList.toggle('hidden', !user);
+  // UI toggle
+  document.getElementById('authLinks').classList.toggle('hidden', !!user);
+  document.getElementById('userMenu').classList.toggle('hidden', !user);
 
-    // avatar
-    const navAv = document.getElementById('nav-avatar');
-    if (navAv) navAv.src = `https://i.pravatar.cc/100?u=${user?.uid||'guest'}`;
+  const navImg  = document.getElementById('nav-avatar');
+const navIcon = document.getElementById('nav-avatar-icon');
+if (user?.photoURL) {
+  if (navImg)  { navImg.src = user.photoURL; navImg.classList.remove('d-none'); }
+  if (navIcon) { navIcon.classList.add('d-none'); }
+} else {
+  if (navImg)  { navImg.classList.add('d-none'); }
+  if (navIcon) { navIcon.classList.remove('d-none'); }
+}
 
+
+  // ✅ AUTH GUARD: ako si odjavljen i stojiš na zaštićenoj ruti, prebaci
+  const h = (location.hash || '#/').replace('#','');
+  if (!user && ['/profile','/new','/inbox'].includes(h)) {
+    APP.route('/login');
+  }
     // resolve samo prvi put
     if (!APP._authReady) { APP._authReady = true; resolve(); }
   });

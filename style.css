@@ -5,242 +5,282 @@
   --text:#0f172a;       /* tamni tekst */
   --bg:#f7f9fc;         /* svijetla pozadina */
   --radius:16px;
-}
-html, body {
-  height: 100%;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-}
 
-main {
-  flex: 1; /* zauzima sav prostor između headera i footera */
+  /* crop modal (light) */
+  --crop-surface:#ffffff;
+  --crop-border:#e5e7eb;
+  --crop-text:#111827;
 }
-
-footer {
-  margin-top: auto; /* guranje footera na dno */
-}
-
-body{ background:var(--bg); color:var(--text) }
-.shell{ max-width:1180px }
-.nav-shadow{ box-shadow:0 6px 30px rgba(0,0,0,.04) }
-/* Dugme Objavi oglas – glatka tranzicija boje */
-.btn-brand{
-  background-color: var(--brand) !important;
-  border-color: var(--brand) !important;
-  color:#fff;
-  transition: background-color .35s ease, border-color .35s ease;
-}
-
-/* LIGHT tema: svjetlija plava na hover */
-html:not([data-theme="dark"]) .btn-brand:hover{
-  background-color: #3fa2ff !important;  /* svjetlija azurno plava */
-  border-color: #3fa2ff !important;
-}
-
-/* DARK tema: još svjetlija nijansa na hover (razlikuje se od #60a5fa) */
-html[data-theme="dark"] .btn-brand:hover{
-  background-color: #8cc8ff !important;  /* vidljivo svjetlije od #60a5fa */
-  border-color: #8cc8ff !important;
-}
-
-
-.logo{ font-weight:800; letter-spacing:.3px }
-.logo .dot{ color:var(--brand) }
-.card{ border-radius:var(--radius) }
-.cat-tile{ border:1px solid #e9eef5; border-radius:14px; transition:.2s; background:#fff }
-.cat-tile:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.06) }
-.cat-icon{ font-size:34px }
-.badge-cat{ background:var(--accent); color:var(--brand) }
-.listing-thumb{ height:200px; object-fit:cover; border-top-left-radius:var(--radius); border-top-right-radius:var(--radius) }
-.price{ font-weight:700 }
-.rating .bi-star-fill{ color:#f59e0b }
-.pointer{ cursor:pointer }
-.hidden{ display:none !important }
-.sidebar{ position:sticky; top:90px }
-/* Chat */
-.chat-box{ height:340px; overflow:auto; background:#fff; border:1px solid #e9eef5; border-radius:12px }
-.msg{ padding:.5rem .75rem; border-radius:12px; margin:.25rem 0; display:inline-block; max-width:82% }
-.msg.me{ background:var(--accent) }
-.msg.them{ background:#f1f5f9 }
-/* === DARK THEME (konsolidovano) === */
 html[data-theme='dark']{
   --brand:#60a5fa;
   --brand-2:#3b82f6;
   --accent:#1e293b;
   --text:#e2e8f0;
   --bg:#0f172a;
+
+  /* crop modal (dark) */
+  --crop-surface:#0f172a;
+  --crop-border:#1f2937;
+  --crop-text:#e5e7eb;
 }
 
-/* global */
-html[data-theme='dark'] body{ background:var(--bg); color:var(--text); }
-
-/* navbar + footer (pregazi bg-white) */
-html[data-theme='dark'] .navbar.bg-white,
-html[data-theme='dark'] footer.bg-white{ background:#1e293b !important; color:var(--text); }
-html[data-theme='dark'] footer{ background:#1e293b; }
-
-/* card / chat / sidebar */
-html[data-theme='dark'] .card,
-html[data-theme='dark'] .chat-box{ background:#1e293b; border-color:#334155; color:var(--text); }
-html[data-theme='dark'] .sidebar .card{ background:#1e293b; }
-
-/* kategorije */
-html[data-theme='dark'] .cat-tile{ background:#122033; border-color:#2a3b52; }
-html[data-theme='dark'] .badge-cat{ background:#203044; color:#9cc3ff; }
-
-/* pretraga + filteri */
-html[data-theme='dark'] .input-group-text{ background:#000 !important; color:#fff !important; border-color:#000 !important; }
-html[data-theme='dark'] .form-control,
-html[data-theme='dark'] .form-select{ background:#0f172a; color:var(--text); border:1px solid #334155; }
-html[data-theme='dark'] .form-control::placeholder{ color:#94a3b8; }
-
-/* linkovi/tekst */
-html[data-theme='dark'] .nav-link,
-html[data-theme='dark'] .text-muted{ color:#cbd5e1 !important; }
-
-/* dropdown */
-html[data-theme='dark'] .dropdown-menu{ background:#1f2a37; color:var(--text); border-color:#334155; }
-html[data-theme='dark'] .dropdown-item{ color:var(--text); }
-html[data-theme='dark'] .dropdown-item:hover{ background:#0f172a; }
-
-/* carousel ikonice */
-html[data-theme='dark'] .carousel-control-prev-icon,
-html[data-theme='dark'] .carousel-control-next-icon{ filter: invert(1); }
-
-/* === Theme switch (slider) – finalna verzija === */
-.theme-toggle{
-  display:inline-flex;
-  align-items:center;
-  gap:.5rem;
-  padding:.25rem .5rem;
-  border-radius:999px;
-  background:#fff;
+/* ===== Layout ===== */
+html,body{height:100%}
+body{
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg);
   color:var(--text);
-  cursor:pointer;
-  line-height:1;
-  border:1px solid transparent;
-  transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+main{flex:1}
+footer{margin-top:auto}
+.shell{max-width:1180px}
+.nav-shadow{box-shadow:0 6px 30px rgba(0,0,0,.04)}
+.hidden{display:none !important}
+.pointer{cursor:pointer}
+.card{border-radius:var(--radius)}
+.sidebar{position:sticky; top:90px}
+
+/* ===== Dugme brand ===== */
+.btn-brand{
+  background-color:var(--brand) !important;
+  border-color:var(--brand) !important;
+  color:#fff;
+  transition:background-color .35s ease, border-color .35s ease;
+}
+html:not([data-theme="dark"]) .btn-brand:hover{
+  background-color:#3fa2ff !important;
+  border-color:#3fa2ff !important;
+}
+html[data-theme="dark"] .btn-brand:hover{
+  background-color:#8cc8ff !important;
+  border-color:#8cc8ff !important;
 }
 
-/* lagani sjen za light mode */
-.theme-toggle {
-  box-shadow: 0 0 0 1px #e9eef5, 0 2px 8px rgba(0,0,0,.08);
+/* ===== Kompaktan navbar ===== */
+.navbar-compact{ padding-top:.25rem; padding-bottom:.25rem; min-height:56px; }
+#userMenu{gap:.5rem !important}
+#nav .input-group .input-group-text{padding:.25rem .5rem}
+#nav .input-group .form-control{padding:.25rem .6rem; height:36px}
+
+/* avatar 34×34 + fallback ikonica iste veličine */
+.avatar-btn img,
+.nav-avatar-icon{
+  width:34px !important;
+  height:34px !important;
+  font-size:34px !important;
+  line-height:34px;
 }
 
-/* u dark modu crna pozadina i okvir */
+/* ===== Dark – global ===== */
+html[data-theme='dark'] body{background:var(--bg); color:var(--text)}
+html[data-theme='dark'] .navbar.bg-white,
+html[data-theme='dark'] footer.bg-white{background:#1e293b !important; color:var(--text)}
+html[data-theme='dark'] footer{background:#1e293b}
+html[data-theme='dark'] .card,
+html[data-theme='dark'] .chat-box{background:#1e293b; border-color:#334155; color:var(--text)}
+html[data-theme='dark'] .sidebar .card{background:#1e293b}
+html[data-theme='dark'] .cat-tile{background:#122033; border-color:#2a3b52}
+html[data-theme='dark'] .badge-cat{background:#203044; color:#9cc3ff}
+html[data-theme='dark'] .input-group-text{background:#000 !important; color:#fff !important; border-color:#000 !important}
+html[data-theme='dark'] .form-control,
+html[data-theme='dark'] .form-select{background:#0f172a; color:var(--text); border:1px solid #334155}
+html[data-theme='dark'] .form-control::placeholder{color:#94a3b8}
+html[data-theme='dark'] .nav-link,
+html[data-theme='dark'] .text-muted{color:#cbd5e1 !important}
+html[data-theme='dark'] .dropdown-menu{background:#1f2a37; color:var(--text); border-color:#334155}
+html[data-theme='dark'] .dropdown-item{color:var(--text)}
+html[data-theme='dark'] .dropdown-item:hover{background:#0f172a}
+html[data-theme='dark'] .carousel-control-prev-icon,
+html[data-theme='dark'] .carousel-control-next-icon{filter:invert(1)}
+html[data-theme='dark'] #userMenu .btn{background:transparent; box-shadow:none}
+
+/* ===== Kategorije/karte ===== */
+.logo{font-weight:800; letter-spacing:.3px}
+.logo .dot{color:var(--brand)}
+.cat-tile{border:1px solid #e9eef5; border-radius:14px; transition:.2s; background:#fff}
+.cat-tile:hover{transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.06)}
+.cat-icon{font-size:34px}
+.badge-cat{background:var(--accent); color:var(--brand)}
+.listing-thumb{height:200px; object-fit:cover; border-top-left-radius:var(--radius); border-top-right-radius:var(--radius)}
+.price{font-weight:700}
+.rating .bi-star-fill{color:#f59e0b}
+.chat-box{height:340px; overflow:auto; background:#fff; border:1px solid #e9eef5; border-radius:12px}
+.msg{padding:.5rem .75rem; border-radius:12px; margin:.25rem 0; display:inline-block; max-width:82%}
+.msg.me{background:var(--accent)}
+.msg.them{background:#f1f5f9}
+
+/* ===== Theme switch (slider) ===== */
+.theme-toggle{
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.2rem .45rem; border-radius:999px;
+  background:#fff; color:var(--text);
+  border:1px solid transparent; cursor:pointer; line-height:1;
+  box-shadow:0 0 0 1px #e9eef5, 0 2px 8px rgba(0,0,0,.08);
+  transition:background-color .5s, border-color .5s, box-shadow .5s;
+}
 html[data-theme="dark"] .theme-toggle{
-  background:#000;
-  border:1px solid #000;
-  box-shadow: 0 0 0 1px #000, 0 2px 10px rgba(0,0,0,.45);
+  background:#000; border:1px solid #000;
+  box-shadow:0 0 0 1px #000, 0 2px 10px rgba(0,0,0,.45);
 }
-
-/* Track (pravougaonik unutar dugmeta) */
-.toggle-track{
-  width:44px;
-  height:24px;
-  background:#e9eef5;
-  border-radius:999px;
-  position:relative;
-  transition: background-color 0.3s ease;
-}
-
-/* kuglica – sa „spring“ efektom */
-:root { --thumb-x: 0px; }
-html[data-theme="dark"] { --thumb-x: 17px; }
-
+.toggle-track{width:42px; height:22px; background:#e9eef5; border-radius:999px; position:relative; transition:background-color .3s}
+:root{ --thumb-x:0px }
+html[data-theme="dark"]{ --thumb-x:16px }
 .toggle-thumb{
-  position:absolute;
-  top:2px;
-  left:2px;
-  width:20px;
-  height:20px;
-  border-radius:50%;
-  transform: translateX(var(--thumb-x));
-  transition: transform 420ms cubic-bezier(.34,1.56,.64,1),
-              background-color 240ms ease,
-              box-shadow 240ms ease;
-   background: #545454;           /* svijetlo siva */
-  /* (opcionalno) zadrži blagi sjaj da se vidi na crnom: */
-  box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.12) inset;
+  position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+  transform:translateX(var(--thumb-x));
+  transition:transform 420ms cubic-bezier(.34,1.56,.64,1), background-color .24s, box-shadow .24s;
+  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+html[data-theme="dark"] .toggle-track{background:#111827; border:1px solid #000; box-shadow:inset 0 0 4px rgba(255,255,255,.05), 0 1px 3px rgba(0,0,0,.8)}
+html[data-theme="dark"] .toggle-thumb{background:#0c0c0c; box-shadow:inset 0 0 2px #111827, 0 1px 3px rgba(0,0,0,.6)}
+.toggle-icons{position:relative; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center}
+.icon-sun,.icon-moon{position:absolute; transition:opacity .3s, transform .3s}
+html:not([data-theme="dark"]) .icon-sun{opacity:1; transform:rotate(0)}
+html:not([data-theme="dark"]) .icon-moon{opacity:0; transform:rotate(-90deg)}
+html[data-theme="dark"] .icon-sun{opacity:0; transform:rotate(90deg)}
+html[data-theme="dark"] .icon-moon{opacity:1; transform:rotate(0)}
+
+/* ===== Avatar outline ===== */
+.profile-outline{
+  border:2px solid var(--brand);
+  box-shadow:0 0 6px rgba(13,110,253,.35);
+  transition:transform .25s, box-shadow .25s, border-color .25s;
+  box-sizing:border-box;           /* bitno: border ne širi sliku */
+}
+.avatar-btn:hover .profile-outline{
+  transform:scale(1.1);
+  box-shadow:0 0 10px rgba(13,110,253,.6);
+}
+html[data-theme='dark'] .profile-outline{
+  border-color:#60a5fa;
+  box-shadow:0 0 6px rgba(96,165,250,.4);
+}
+html[data-theme='dark'] .avatar-btn:hover .profile-outline{
+  box-shadow:0 0 10px rgba(96,165,250,.7);
 }
 
-/* Light tema: bijela kuglica */
-html:not([data-theme="dark"]) .toggle-thumb {
-  background: #fff; /* čisto bijela za light */
+/* ===== Uredi profil – avatar + overlay ===== */
+/* ===== Uredi profil – avatar + overlay ===== */
+#p-avatar-wrap {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  cursor: pointer;
 }
 
-/* Dark tema: sivkasta kuglica */
-html[data-theme="dark"] .toggle-thumb {
-  background: #0c0c0c; /* svijetlo siva za dark */
-  box-shadow:
-    inset 0 0 2px #111827, /* svijetli unutrašnji rub */
-    0 1px 3px rgba(0,0,0,0.6); 
+/* Slika ispunjava cijeli krug */
+#p-avatar {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Fallback ikona (bi-person-circle) – centar kruga, bez baseline-a */
+#p-avatar-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 120px;
+  line-height: 0;
+  color: #cbd5e1;
+  pointer-events: none;
 }
 
 
-.theme-toggle:active .toggle-thumb{
-  transform: translateX(var(--thumb-x)) scale(.92);
+
+
+/* — Hover overlay (savršeno centriran) — */
+#p-avatar-wrap .avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  display: grid;                  /* precizno centriranje */
+  place-items: center;            /* horizontalno i vertikalno */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 1;
+  aspect-ratio: 1 / 1;            /* savršen krug */
 }
 
-/* ikone */
-.toggle-icons{
-  position:relative;
-  width:18px;
-  height:18px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+#p-avatar-wrap .avatar-overlay .bi-camera-fill {
+  display: block;
+  line-height: 0;                 /* uklanja višak prostora font ikone */
+  font-size: 28px;
+  color: #fff;
+  transform: translateY(1px);     /* optički pomak – 1px ako djeluje visoko/nisko */
 }
 
-.icon-sun, .icon-moon{
-  position:absolute;
-  transition:opacity .3s ease, transform .3s ease;
+#p-avatar-wrap:hover .avatar-overlay {
+  opacity: 1;
 }
 
-html:not([data-theme="dark"]) .icon-sun{ opacity:1; transform:rotate(0deg) }
-html:not([data-theme="dark"]) .icon-moon{ opacity:0; transform:rotate(-90deg) }
-html[data-theme="dark"] .icon-sun{ opacity:0; transform:rotate(90deg) }
-html[data-theme="dark"] .icon-moon{ opacity:1; transform:rotate(0deg) }
 
-/* Dark tema – track s blagom sivkastom zonom */
-html[data-theme="dark"] .toggle-track {
-  background: #111827; /* vrlo tamna siva (nije čista crna) */
-  border: 1px solid #000;
-  box-shadow:
-    inset 0 0 4px rgba(255,255,255,0.05),  /* lagani unutrašnji svijetli rub */
-    0 1px 3px rgba(0,0,0,0.8);              /* vanjska sjenka za dubinu */
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+/* ===== Crop modal skin ===== */
+.crop-modal .modal-content{
+  background:var(--crop-surface); color:var(--crop-text);
+  border:1px solid var(--crop-border); border-radius:14px;
 }
-/* Avatar dugme bez okvira/shadowa u dark temi */
-html[data-theme="dark"] #userMenu .btn {
+.crop-modal .modal-header, .crop-modal .modal-footer{border-color:var(--crop-border)}
+.cropper-view-box, .cropper-face{border-radius:50%}
+.cropper-modal{background:rgba(0,0,0,.6)}
+.cropper-dashed{ border-color:transparent; }
+
+
+
+
+/* ===== Selektovanje teksta ===== */
+html, body{user-select:none; cursor:default !important}
+input, textarea, select, button, a{user-select:text !important; cursor:text !important}
+a, button, .pointer, [onclick]{cursor:pointer !important}
+
+
+/* Crop modal: širi i pregledniji */
+.crop-modal .modal-dialog {
+  max-width: 1100px;
+  width: calc(100vw - 2rem);
+}
+.crop-area {
+  width: 100%;
+  height: 72vh; /* više prostora za crop */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   background: transparent;
-  box-shadow: none;
 }
 
-/* === Avatar outline === */
-.profile-outline {
-  border: 2px solid var(--brand);
-  box-shadow: 0 0 6px rgba(13,110,253,0.35);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+/* Krug umjesto kvadrata */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 50%;
 }
 
-/* Hover efekt */
-.avatar-btn:hover .profile-outline {
-  transform: scale(1.1);
-  box-shadow: 0 0 10px rgba(13,110,253,0.6);
-}
-
-/* Dark tema – hladniji, svijetliji outline */
-html[data-theme='dark'] .profile-outline {
-  border-color: #60a5fa;
-  box-shadow: 0 0 6px rgba(96,165,250,0.4);
-}
-
-html[data-theme='dark'] .avatar-btn:hover .profile-outline {
-  box-shadow: 0 0 10px rgba(96,165,250,0.7);
+/* Čist izgled bez crta */
+.cropper-dashed {
+  border-color: transparent;
 }
 
 
+/* Crop slika ne smije biti ograničena CSS-om – neka je potpuno slobodna */
+#crop-image{
+  max-width: none !important;
+  max-height: none !important;
+  width: auto !important;
+  height: auto !important;
+  display: block;
+}
 
 
+textarea {
+  resize: none !important;
+}
